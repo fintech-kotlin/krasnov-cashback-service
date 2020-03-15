@@ -1,0 +1,21 @@
+sign: lalka
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ****
+    username: ****
+    password: ****
+  jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
+
+kafka:
+  consumer:
+    bootstrapServers: 40.69.78.245:19092
+    topic: transactions
+    groupId: cashback
+
+service.url:
+  card: http://****/card-service/api/v1/card/
+  client: http://****/client-service/api/v1/client/
+  loyaly: http://****/loyalty-service/api/v1/program/
+  notification: http://****/notification-service/api/v2/client/
