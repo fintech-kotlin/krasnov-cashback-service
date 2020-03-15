@@ -1,3 +1,5 @@
+sign: lalka
+
 spring:
   datasource:
     driver-class-name: org.h2.Driver
@@ -5,10 +7,14 @@ spring:
     username: sa
     password: sa
 
-paimentprocessing:
-  kafka:
-    consumer:
-      bootstrapServers: ${spring.embedded.kafka.brokers}
-      groupId: testGroup
-      topic: testTopic
+kafka:
+  consumer:
+    bootstrapServers: ${spring.embedded.kafka.brokers}
+    topic: testTopic
+    groupId: testGroup
 
+service.url:
+  card: http://test/card-service/api/v1/card/
+  client: http://test/client-service/api/v1/client/
+  loyaly: http://test/loyalty-service/api/v1/program/
+  notification: http://test/notification-service/api/v2/client/
