@@ -1,6 +1,5 @@
 package ru.tinkoff.fintech.service
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import ru.tinkoff.fintech.client.CardServiceClient
@@ -17,7 +16,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
-class ProcessTransactionService @Autowired constructor(
+class ProcessTransactionService (
     private val cardServiceClient: CardServiceClient,
     private val clientService: ClientService,
     private val loyaltyServiceClient: LoyaltyServiceClient,
