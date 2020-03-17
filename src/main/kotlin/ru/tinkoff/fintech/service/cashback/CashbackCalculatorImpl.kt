@@ -3,6 +3,7 @@ package ru.tinkoff.fintech.service.cashback
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.math3.util.ArithmeticUtils
 import org.apache.commons.text.similarity.LevenshteinDistance
+import org.springframework.stereotype.Service
 import ru.tinkoff.fintech.model.TransactionInfo
 import java.util.*
 import kotlin.math.round
@@ -14,6 +15,7 @@ internal const val MAX_CASH_BACK = 3000.0
 internal const val MCC_SOFTWARE = 5734
 internal const val MCC_BEER = 5921
 
+@Service
 class CashbackCalculatorImpl : CashbackCalculator {
 
     override fun calculateCashback(transactionInfo: TransactionInfo): Double {
