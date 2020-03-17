@@ -5,14 +5,12 @@ import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
-class NotificationServiceClientImpl @Autowired constructor(
-    private val httpClient: ApacheHttpClientService
-) : NotificationServiceClient {
+class NotificationServiceClientImpl (private val httpClient: ApacheHttpClientService) : NotificationServiceClient {
+
     @Value("\${service.url.notification}")
     private val url: String? = null
 
