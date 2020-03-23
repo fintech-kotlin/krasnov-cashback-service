@@ -1,5 +1,9 @@
 package ru.tinkoff.fintech.service
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import ru.tinkoff.fintech.client.CardServiceClient
@@ -16,7 +20,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
-class ProcessTransactionService (
+class ProcessTransactionService(
     private val cardServiceClient: CardServiceClient,
     private val clientService: ClientService,
     private val loyaltyServiceClient: LoyaltyServiceClient,
@@ -28,19 +32,25 @@ class ProcessTransactionService (
     @Value("\${sign}")
     private val sign: String = ""
 
-    fun processTransaction(transaction: Transaction) {
+    fun processTransaction(transaction: Transaction) = CoroutineScope(Dispatchers.IO).launch {
         val card = cardServiceClient.getCard(transaction.cardNumber)
 
-        val client = clientService.getClient(card.client)
+        val asyncClient = async { clientService.getClient(card.client) }
+        val asyncLoyaltyProgram = async { loyaltyServiceClient.getLoyaltyProgram(card.loyaltyProgram) }
 
-        val loyaltyProgram = loyaltyServiceClient.getLoyaltyProgram(card.loyaltyProgram)
+        val client = asyncClient.await()
+        val loyaltyProgram = asyncLoyaltyProgram.await()
 
         val amount =
             cashbackCalculator.calculateCashback(
                 TransactionInfo(
                     loyaltyProgramName = loyaltyProgram.name,
                     transactionSum = transaction.value,
-                    cashbackTotalValue = this.calculateTotalAmount(card.id),
+                    cashbackTotalValue = loyaltyPaymentRepository.findAllBySignAndCardIdAndDateTimeAfter(
+                        sign,
+                        card.id,
+                        LocalDate.now().minusMonths(1).atStartOfDay()
+                    ).map { loyaltyPayment -> loyaltyPayment.value }.sum(),
                     mccCode = transaction.mccCode,
                     clientBirthDate = client.birthDate,
                     firstName = client.firstName,
@@ -61,25 +71,14 @@ class ProcessTransactionService (
             )
         )
 
-        this.saveLoyaltyPayment(card.id, transaction.transactionId, amount)
-    }
-
-    private fun calculateTotalAmount(cardId: String): Double {
-        return loyaltyPaymentRepository.findAllBySignAndCardIdAndDateTimeAfter(
-            sign,
-            cardId,
-            LocalDate.now().minusMonths(1).atStartOfDay()
-        ).map { loyaltyPayment -> loyaltyPayment.value }.sum()
-    }
-
-    private fun saveLoyaltyPayment(cardId: String, transactionId: String, cashbackAmount: Double) {
-        val loyaltyPaymentEntity = LoyaltyPaymentEntity(
-            sign = sign,
-            value = cashbackAmount,
-            cardId = cardId,
-            dateTime = LocalDateTime.now(),
-            transactionId = transactionId
+        loyaltyPaymentRepository.save(
+            LoyaltyPaymentEntity(
+                sign = sign,
+                value = amount,
+                cardId = card.id,
+                dateTime = LocalDateTime.now(),
+                transactionId = transaction.transactionId
+            )
         )
-        loyaltyPaymentRepository.save(loyaltyPaymentEntity)
     }
 }
