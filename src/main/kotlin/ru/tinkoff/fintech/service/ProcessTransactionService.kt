@@ -26,17 +26,23 @@ class ProcessTransactionService(
     private val loyaltyServiceClient: LoyaltyServiceClient,
     private val notificationService: NotificationService,
     private val cashbackCalculator: CashbackCalculator,
-    private val loyaltyPaymentRepository: LoyaltyPaymentRepository
+    private val loyaltyPaymentRepository: LoyaltyPaymentRepository,
+    @Value("\${sign}") private val sign: String
 ) {
-
-    @Value("\${sign}")
-    private val sign: String = ""
 
     fun processTransaction(transaction: Transaction) = CoroutineScope(Dispatchers.IO).launch {
         val card = cardServiceClient.getCard(transaction.cardNumber)
 
         val asyncClient = async { clientService.getClient(card.client) }
         val asyncLoyaltyProgram = async { loyaltyServiceClient.getLoyaltyProgram(card.loyaltyProgram) }
+
+        val cashbackTotalValueAsync = async {
+            loyaltyPaymentRepository.findAllBySignAndCardIdAndDateTimeAfter(
+                sign,
+                card.id,
+                LocalDate.now().minusMonths(1).atStartOfDay()
+            ).map { loyaltyPayment -> loyaltyPayment.value }.sum()
+        }
 
         val client = asyncClient.await()
         val loyaltyProgram = asyncLoyaltyProgram.await()
@@ -46,11 +52,7 @@ class ProcessTransactionService(
                 TransactionInfo(
                     loyaltyProgramName = loyaltyProgram.name,
                     transactionSum = transaction.value,
-                    cashbackTotalValue = loyaltyPaymentRepository.findAllBySignAndCardIdAndDateTimeAfter(
-                        sign,
-                        card.id,
-                        LocalDate.now().minusMonths(1).atStartOfDay()
-                    ).map { loyaltyPayment -> loyaltyPayment.value }.sum(),
+                    cashbackTotalValue = cashbackTotalValueAsync.await(),
                     mccCode = transaction.mccCode,
                     clientBirthDate = client.birthDate,
                     firstName = client.firstName,
