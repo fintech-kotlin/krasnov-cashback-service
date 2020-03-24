@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
-class NotificationServiceClientImpl (private val httpClient: ApacheHttpClientService) : NotificationServiceClient {
-
-    @Value("\${service.url.notification}")
-    private val url: String? = null
+class NotificationServiceClientImpl(
+    @Value("\${service.url.notification}") private val url: String,
+    private val httpClient: ApacheHttpClientService
+) : NotificationServiceClient {
 
     override fun sendNotification(clientId: String, message: String) {
         return runBlocking {

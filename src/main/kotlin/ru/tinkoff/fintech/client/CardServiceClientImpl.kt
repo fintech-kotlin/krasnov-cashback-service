@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service
 import ru.tinkoff.fintech.model.Card
 
 @Service
-class CardServiceClientImpl (private val httpClient: ApacheHttpClientService) : CardServiceClient {
-
-    @Value("\${service.url.card}")
-    private val url: String? = null
+class CardServiceClientImpl (
+    @Value("\${service.url.card}") private val url: String,
+    private val httpClient: ApacheHttpClientService
+) : CardServiceClient {
 
     override fun getCard(id: String): Card {
         return runBlocking {

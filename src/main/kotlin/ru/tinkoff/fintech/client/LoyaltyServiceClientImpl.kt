@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service
 import ru.tinkoff.fintech.model.LoyaltyProgram
 
 @Service
-class LoyaltyServiceClientImpl (private val httpClient: ApacheHttpClientService) : LoyaltyServiceClient {
-
-    @Value("\${service.url.loyaly}")
-    private val url: String? = null
+class LoyaltyServiceClientImpl (
+    @Value("\${service.url.loyaly}") private val url: String,
+    private val httpClient: ApacheHttpClientService
+) : LoyaltyServiceClient {
 
     override fun getLoyaltyProgram(id: String): LoyaltyProgram {
         return runBlocking {
